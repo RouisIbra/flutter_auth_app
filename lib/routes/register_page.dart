@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/provider/session_provider.dart';
+import 'package:flutter_auth_app/validations/form_validations.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -85,6 +86,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 children: [
                   // Username input field
                   TextFormField(
+                    validator: validateUserName,
                     controller: usernameTextInput,
                     decoration: const InputDecoration(hintText: "Username"),
                   ),
@@ -93,6 +95,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   // Email input field
                   TextFormField(
+                    validator: validateEmail,
                     controller: emailTextInput,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(hintText: "Email"),
@@ -102,6 +105,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   // Password input field
                   TextFormField(
+                    validator: validatePassword,
                     controller: passwordTextInput,
                     decoration: const InputDecoration(hintText: "Password"),
                     obscureText: true,

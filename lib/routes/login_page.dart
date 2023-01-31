@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/provider/session_provider.dart';
+import 'package:flutter_auth_app/validations/form_validations.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -82,6 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   // Username input field
                   TextFormField(
+                    validator: validateUserName,
                     controller: usernameTextInput,
                     decoration: const InputDecoration(hintText: "Username"),
                   ),
@@ -90,6 +92,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   // Password input field
                   TextFormField(
+                    validator: validatePassword,
                     controller: passwordTextInput,
                     decoration: const InputDecoration(hintText: "Password"),
                     // Set text to obscure to hide password
