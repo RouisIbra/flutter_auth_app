@@ -3,50 +3,53 @@ import 'package:flutter_auth_app/provider/session_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  /// Form's global key
+class _RegisterPageState extends State<RegisterPage> {
+  // Form's global key
   final _formkey = GlobalKey<FormState>();
 
-  /// Username input controller
+  // form input controllers
   final usernameTextInput = TextEditingController();
-
-  /// Password input controller
   final passwordTextInput = TextEditingController();
+  final emailTextInput = TextEditingController();
 
-  /// Form submitting state
+  // form submitting state
   bool isSubmitting = false;
 
-  /// Login handler
-  _hanldeLogin() {
+  // register action handler
+  _hanldeRegister() {
     // disable submit button
     setState(() {
       isSubmitting = true;
     });
 
-    /// validate form
+    // validate form
     if (_formkey.currentState!.validate()) {
+      // get session provider
       final sessionProvider =
           Provider.of<SessionProvider>(context, listen: false);
 
-      // login
+      // register user
       sessionProvider
-          .login(usernameTextInput.text, passwordTextInput.text)
-          .then((success) {
-        if (success) {
-          // if login is successful replace to home page
-          context.pushReplacement("/");
+          .register(
+        usernameTextInput.text,
+        emailTextInput.text,
+        passwordTextInput.text,
+      )
+          // post reigster actions
+          .then((result) {
+        if (result.success) {
+          context.pushReplacement("/login");
         } else {
-          // Show login failed message as snackbar
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Incorrect username or password"),
+            SnackBar(
+              content: Text("Failed to register. Reason: ${result.message}"),
             ),
           );
         }
@@ -59,18 +62,18 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  _handleGoToRegisterPage() {
-    context.go("/register");
+  _handleGoToLoginPage() {
+    context.go("/login");
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Login Page"),
+        title: const Text("Register Page"),
       ),
       body: Center(
-        // put the whole form in a SingleChildScrollView to avoid RenderFlex overflow
+        // put all form into SingleChildScrollView to avoid RenderFlex overflow
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(30.0),
@@ -88,23 +91,30 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(
                     height: 20.0,
                   ),
+                  // Email input field
+                  TextFormField(
+                    controller: emailTextInput,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(hintText: "Email"),
+                  ),
+                  const SizedBox(
+                    height: 20.0,
+                  ),
                   // Password input field
                   TextFormField(
                     controller: passwordTextInput,
                     decoration: const InputDecoration(hintText: "Password"),
-                    // Set text to obscure to hide password
                     obscureText: true,
-                    // disable autocorrect and suggestions
                     autocorrect: false,
                     enableSuggestions: false,
                   ),
                   const SizedBox(
                     height: 20.0,
                   ),
-                  // Login button
+                  // Submit button
                   ElevatedButton(
-                    onPressed: isSubmitting ? null : _hanldeLogin,
-                    child: const Text("Login"),
+                    onPressed: isSubmitting ? null : _hanldeRegister,
+                    child: const Text("Register"),
                   ),
                   const SizedBox(
                     height: 20.0,
@@ -112,10 +122,10 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("Don't have an account?"),
+                      const Text("Already have an account?"),
                       TextButton(
-                        onPressed: _handleGoToRegisterPage,
-                        child: const Text("Register"),
+                        onPressed: _handleGoToLoginPage,
+                        child: const Text("Login"),
                       )
                     ],
                   )
