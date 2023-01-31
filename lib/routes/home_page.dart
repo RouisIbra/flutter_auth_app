@@ -44,8 +44,11 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
-      body: const Center(
-        child: Text("Welcome!"),
+      body: Center(
+        child: Consumer<SessionProvider>(
+          builder: (context, value, child) =>
+              Text("Hello ${value.user?.username}!"),
+        ),
       ),
     );
   }
