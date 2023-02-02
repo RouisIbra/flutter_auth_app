@@ -9,6 +9,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class SessionProvider extends ChangeNotifier {
+  SessionProvider(this.client, {this.storage = const FlutterSecureStorage()});
+
+  // http client
+  http.Client client;
+
   // Current User object
   User? _user;
 
@@ -24,8 +29,7 @@ class SessionProvider extends ChangeNotifier {
   User? get user => _user;
 
   // Secure flutter storage for session secret key
-  final storage = const FlutterSecureStorage();
-
+  final FlutterSecureStorage storage;
   // Session key name (the same as cookie name sent by server)
   final String sessionKeyName = "sessionid";
 
@@ -45,20 +49,25 @@ class SessionProvider extends ChangeNotifier {
   }
 
   /// Convert session key to a cookie string to be sent over HTTP
-  Future<String> _sessionKeyToCookie() async {
+  Future<String?> _sessionKeyToCookie() async {
     final sessionKey = await _getSessionKey();
-    final cookie = Cookie(sessionKeyName, sessionKey ?? "");
+
+    if (sessionKey == null) {
+      return null;
+    }
+
+    final cookie = Cookie(sessionKeyName, sessionKey);
     return cookie.toString();
   }
 
   /// Get method that automatically adds session key as cookie to the request
   Future<http.Response> _get(String path) async {
     final cookie = await _sessionKeyToCookie();
-    return http.get(
+    return client.get(
       Uri.parse("$apiUrl$path"),
       headers: {
         HttpHeaders.acceptHeader: "application/json",
-        HttpHeaders.cookieHeader: cookie
+        if (cookie != null) HttpHeaders.cookieHeader: cookie
       },
     ).timeout(
       // set server response timeout
@@ -70,13 +79,13 @@ class SessionProvider extends ChangeNotifier {
   /// Post method that automatically adds session key as cookie to the request
   Future<http.Response> _post(String path, {Map<String, dynamic>? body}) async {
     final cookie = await _sessionKeyToCookie();
-    return http
+    return client
         .post(
           Uri.parse("$apiUrl$path"),
           headers: {
             HttpHeaders.acceptHeader: "application/json",
             HttpHeaders.contentTypeHeader: "application/json",
-            HttpHeaders.cookieHeader: cookie
+            if (cookie != null) HttpHeaders.cookieHeader: cookie
           },
           body: body != null ? jsonEncode(body) : null,
         )

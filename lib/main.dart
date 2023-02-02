@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/config/router_config.dart';
 import 'package:flutter_auth_app/provider/session_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final sessionProvider = SessionProvider();
+  final sessionProvider = SessionProvider(http.Client());
   try {
     await sessionProvider.refreshSession();
   } catch (error) {
