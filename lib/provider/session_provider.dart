@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/config/config.dart';
+import 'package:flutter_auth_app/models/login_result.dart';
 import 'package:flutter_auth_app/models/register_result.dart';
 import 'package:flutter_auth_app/models/user.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -12,7 +13,7 @@ class SessionProvider extends ChangeNotifier {
   SessionProvider(this.client, {this.storage = const FlutterSecureStorage()});
 
   // http client
-  http.Client client;
+  final http.Client client;
 
   // Current User object
   User? _user;
@@ -22,7 +23,8 @@ class SessionProvider extends ChangeNotifier {
 
   // HTTP request timout response
   http.Response _timeoutRespone() {
-    return http.Response("Error: server not responsing", 408);
+    debugPrint("Request timeout");
+    return http.Response("Error: Server not responsing", 500);
   }
 
   // user getter
@@ -133,7 +135,7 @@ class SessionProvider extends ChangeNotifier {
   }
 
   // Login promise
-  Future<bool> login(String username, String password) async {
+  Future<LoginResult> login(String username, String password) async {
     final response = await _post(
       "/login",
       body: <String, dynamic>{
@@ -145,9 +147,14 @@ class SessionProvider extends ChangeNotifier {
     if (response.statusCode == 200) {
       await _saveSession(response);
       await refreshSession();
-      return true;
+      return LoginResult(success: true);
+    } else if (response.statusCode == 500) {
+      return LoginResult(success: false, message: response.body.toString());
     } else {
-      return false;
+      return LoginResult(
+        success: false,
+        message: "Incorrect Username or Password",
+      );
     }
   }
 

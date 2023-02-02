@@ -26,38 +26,50 @@ class _LoginPageState extends State<LoginPage> {
 
   /// Login handler
   _hanldeLogin() {
-    // disable submit button
-    setState(() {
-      isSubmitting = true;
-    });
-
     /// validate form
     if (_formkey.currentState!.validate()) {
+      // disable submit button
+      setState(() {
+        isSubmitting = true;
+      });
+
       final sessionProvider =
           Provider.of<SessionProvider>(context, listen: false);
 
       // login
       sessionProvider
           .login(usernameTextInput.text, passwordTextInput.text)
-          .then((success) {
-        if (success) {
+          .then((result) {
+        if (result.success) {
           // if login is successful replace to home page
           context.pushReplacement("/");
         } else {
-          // Show login failed message as snackbar
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Incorrect username or password"),
-            ),
-          );
-        }
-      });
-    }
+          debugPrint("Login failed");
 
-    // re-enable submit button
-    setState(() {
-      isSubmitting = false;
-    });
+          if (result.message != null) {
+            // Show login failed message as snackbar
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result.message!),
+              ),
+            );
+          }
+        }
+      }).onError((error, stackTrace) {
+        // Show error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to login. Reason: ${error.toString()}"),
+          ),
+        );
+        debugPrintStack(stackTrace: stackTrace);
+      }).whenComplete(
+        () => setState(() {
+          // re-enable submit button
+          isSubmitting = false;
+        }),
+      );
+    }
   }
 
   _handleGoToRegisterPage() {
@@ -107,7 +119,11 @@ class _LoginPageState extends State<LoginPage> {
                   // Login button
                   ElevatedButton(
                     onPressed: isSubmitting ? null : _hanldeLogin,
-                    child: const Text("Login"),
+                    child: isSubmitting
+                        ? const CircularProgressIndicator(
+                            strokeWidth: 3.0,
+                          )
+                        : const Text("Login"),
                   ),
                   const SizedBox(
                     height: 20.0,

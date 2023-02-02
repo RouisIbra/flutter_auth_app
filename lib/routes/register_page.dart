@@ -25,13 +25,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
   // register action handler
   _hanldeRegister() {
-    // disable submit button
-    setState(() {
-      isSubmitting = true;
-    });
-
     // validate form
     if (_formkey.currentState!.validate()) {
+      // disable submit button
+      setState(() {
+        isSubmitting = true;
+      });
       // get session provider
       final sessionProvider =
           Provider.of<SessionProvider>(context, listen: false);
@@ -54,13 +53,20 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           );
         }
-      });
+      }).onError((error, stackTrace) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to register. Reason: ${error.toString()}"),
+          ),
+        );
+        debugPrintStack(stackTrace: stackTrace);
+      }).whenComplete(
+        () => setState(() {
+          // re-enable submit button
+          isSubmitting = false;
+        }),
+      );
     }
-
-    // re-enable submit button
-    setState(() {
-      isSubmitting = false;
-    });
   }
 
   _handleGoToLoginPage() {

@@ -7,12 +7,7 @@ import 'package:http/http.dart' as http;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final sessionProvider = SessionProvider(http.Client());
-  try {
-    await sessionProvider.refreshSession();
-  } catch (error) {
-    debugPrint("Failed to refresh session on app start");
-    debugPrintStack();
-  }
+  await sessionProvider.refreshSession();
 
   runApp(
     ChangeNotifierProvider(
@@ -30,9 +25,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Flutter Auth App',
       routerConfig: routerConfig,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark().copyWith(
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue[900],
+          ),
+        ),
       ),
+      themeMode: ThemeMode.dark,
     );
   }
 }
