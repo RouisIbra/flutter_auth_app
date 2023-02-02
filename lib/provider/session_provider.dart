@@ -148,12 +148,15 @@ class SessionProvider extends ChangeNotifier {
       await _saveSession(response);
       await refreshSession();
       return LoginResult(success: true);
-    } else if (response.statusCode == 500) {
-      return LoginResult(success: false, message: response.body.toString());
-    } else {
+    } else if (response.statusCode == 403) {
       return LoginResult(
         success: false,
         message: "Incorrect Username or Password",
+      );
+    } else {
+      return LoginResult(
+        success: false,
+        message: "An unknown error has occured",
       );
     }
   }
@@ -175,10 +178,15 @@ class SessionProvider extends ChangeNotifier {
 
     if (response.statusCode == 200) {
       return const RegisterResult(success: true);
-    } else {
+    } else if (response.statusCode == 403) {
       Map<String, dynamic> responseBody = jsonDecode(response.body);
       String message = responseBody["message"];
       return RegisterResult(success: false, message: message);
+    } else {
+      return const RegisterResult(
+        success: false,
+        message: "An unkown error has occured",
+      );
     }
   }
 

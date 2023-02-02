@@ -124,7 +124,15 @@ class _RegisterPageState extends State<RegisterPage> {
                   // Submit button
                   ElevatedButton(
                     onPressed: isSubmitting ? null : _hanldeRegister,
-                    child: const Text("Register"),
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.0,
+                            ),
+                          )
+                        : const Text("Register"),
                   ),
                   const SizedBox(
                     height: 20.0,
