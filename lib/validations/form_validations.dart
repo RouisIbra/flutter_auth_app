@@ -21,8 +21,8 @@ String? validateEmail(String? value) {
 
   // validate email using regulat expression
   if (!RegExp(
-          r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-      .hasMatch(value)) {
+    r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+  ).hasMatch(value)) {
     return "Invalid email format";
   }
 
