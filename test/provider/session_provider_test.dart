@@ -38,8 +38,11 @@ void main() {
         ),
       ).thenAnswer(
         (_) async => http.Response(
-          "You are not logged in",
+          '{ "message": "You are not logged in" }',
           401,
+          headers: {
+            HttpHeaders.contentTypeHeader: "application/json",
+          },
         ),
       );
 
@@ -73,6 +76,9 @@ void main() {
         (_) async => http.Response(
           '{"id": 1,"username": "test1", "email": "test1@example.com"}',
           200,
+          headers: {
+            HttpHeaders.contentTypeHeader: "application/json",
+          },
         ),
       );
 
@@ -86,7 +92,7 @@ void main() {
       expect(sessionProvider.user, isA<User>());
     });
 
-    test("Login test", () async {
+    test("Login success test", () async {
       TestWidgetsFlutterBinding.ensureInitialized();
       const fakeSessionKey = "secretcookievalue";
       final client = MockClient();
@@ -112,6 +118,7 @@ void main() {
           '{"message": "Successfully logged in"}',
           200,
           headers: {
+            HttpHeaders.contentTypeHeader: "application/json",
             HttpHeaders.setCookieHeader:
                 "${sessionProvider.sessionKeyName}=$fakeSessionKey; Path=/; HttpOnly"
           },
@@ -132,6 +139,9 @@ void main() {
         (_) async => http.Response(
           '{"id": 1,"username": "test", "email": "test@example.com"}',
           200,
+          headers: {
+            HttpHeaders.contentTypeHeader: "application/json",
+          },
         ),
       );
 
@@ -153,6 +163,119 @@ void main() {
       await sessionProvider.login("test", "test");
 
       expect(sessionProvider.user, isA<User>());
+    });
+
+    test("Login failure test", () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final client = MockClient();
+      final storage = MockFlutterSecureStorage();
+      final sessionProvider = SessionProvider(client, storage: storage);
+      // fake login request
+      when(
+        client.post(
+          Uri.parse("$apiUrl/login"),
+          headers: {
+            HttpHeaders.acceptHeader: "application/json",
+            HttpHeaders.contentTypeHeader: "application/json",
+          },
+          body: jsonEncode(
+            <String, String>{"username": "test", "password": "wrongpassword"},
+          ),
+        ),
+      ).thenAnswer((_) async {
+        return http.Response(
+          '{"message": "Incorrect passsword"}',
+          403,
+          headers: {
+            HttpHeaders.contentTypeHeader: "application/json",
+          },
+        );
+      });
+
+      // Mock /user GET request
+      when(
+        client.get(
+          Uri.parse("$apiUrl/user"),
+          headers: {
+            HttpHeaders.acceptHeader: "application/json",
+          },
+        ),
+      ).thenAnswer(
+        (_) async => http.Response(
+          '{"message": "You are not logged in"}',
+          401,
+        ),
+      );
+
+      // fake secure storage read
+      when(
+        storage.read(key: sessionProvider.sessionKeyName),
+      ).thenAnswer((_) async => null);
+
+      await sessionProvider.login("test", "test");
+
+      expect(sessionProvider.user, isNull);
+    });
+
+    test("Register test", () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final client = MockClient();
+      final storage = MockFlutterSecureStorage();
+      final sessionProvider = SessionProvider(client, storage: storage);
+
+      // fake register request
+      when(
+        client.post(
+          Uri.parse("$apiUrl/register"),
+          headers: {
+            HttpHeaders.acceptHeader: "application/json",
+            HttpHeaders.contentTypeHeader: "application/json",
+          },
+          body: jsonEncode(
+            <String, String>{
+              "username": "test",
+              "email": "test@example.com",
+              "password": "testpass"
+            },
+          ),
+        ),
+      ).thenAnswer((_) async {
+        return http.Response(
+          '{"message": "Registration successfull"}',
+          200,
+          headers: {
+            HttpHeaders.contentTypeHeader: "application/json",
+          },
+        );
+      });
+
+      // Mock /user GET request
+      when(
+        client.get(
+          Uri.parse("$apiUrl/user"),
+          headers: {
+            HttpHeaders.acceptHeader: "application/json",
+          },
+        ),
+      ).thenAnswer(
+        (_) async => http.Response(
+          '{"message": "You are not logged in"}',
+          401,
+        ),
+      );
+
+      // fake secure storage read
+      when(
+        storage.read(key: sessionProvider.sessionKeyName),
+      ).thenAnswer((_) async => null);
+
+      final registerResult = await sessionProvider.register(
+        "test",
+        "test@example.com",
+        "testpass",
+      );
+
+      expect(registerResult.success, true);
     });
   });
 }
