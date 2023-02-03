@@ -44,31 +44,18 @@ class _LoginPageState extends State<LoginPage> {
           // if login is successful replace to home page
           context.pushReplacement("/");
         } else {
-          debugPrint("Login failed");
+          debugPrint("Error: Login failed");
 
           if (result.message != null) {
             // Show login failed message as snackbar
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(result.message!),
+                content: Text("Failed to login. Reason: ${result.message!}"),
               ),
             );
           }
         }
-      }).onError((error, stackTrace) {
-        // Show error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed to login. Reason: ${error.toString()}"),
-          ),
-        );
-        debugPrintStack(stackTrace: stackTrace);
-      }).whenComplete(
-        () => setState(() {
-          // re-enable submit button
-          isSubmitting = false;
-        }),
-      );
+      });
     }
   }
 

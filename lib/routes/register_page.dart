@@ -47,25 +47,16 @@ class _RegisterPageState extends State<RegisterPage> {
         if (result.success) {
           context.pushReplacement("/login");
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Failed to register. Reason: ${result.message}"),
-            ),
-          );
+          debugPrint("Error: Failed to register");
+          if (result.message != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Failed to register. Reason: ${result.message!}"),
+              ),
+            );
+          }
         }
-      }).onError((error, stackTrace) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed to register. Reason: ${error.toString()}"),
-          ),
-        );
-        debugPrintStack(stackTrace: stackTrace);
-      }).whenComplete(
-        () => setState(() {
-          // re-enable submit button
-          isSubmitting = false;
-        }),
-      );
+      });
     }
   }
 
