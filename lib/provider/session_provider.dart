@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 
@@ -18,13 +19,10 @@ class SessionProvider extends ChangeNotifier {
   // Current User object
   User? _user;
 
-  // HTTP request timeout
-  final int responseTimeoutSeconds = 10;
-
   // HTTP request timout response
-  http.Response _timeoutRespone() {
-    debugPrint("Request timeout");
-    return http.Response("Error: Server not responsing", 500);
+  _debugPrint(Object e, StackTrace? stackTrace) {
+    debugPrint(e.toString());
+    debugPrintStack(stackTrace: stackTrace);
   }
 
   // user getter
@@ -71,41 +69,35 @@ class SessionProvider extends ChangeNotifier {
         HttpHeaders.acceptHeader: "application/json",
         if (cookie != null) HttpHeaders.cookieHeader: cookie
       },
-    ).timeout(
-      // set server response timeout
-      Duration(seconds: responseTimeoutSeconds),
-      onTimeout: _timeoutRespone,
     );
   }
 
   /// Post method that automatically adds session key as cookie to the request
   Future<http.Response> _post(String path, {Map<String, dynamic>? body}) async {
     final cookie = await _sessionKeyToCookie();
-    return client
-        .post(
-          Uri.parse("$apiUrl$path"),
-          headers: {
-            HttpHeaders.acceptHeader: "application/json",
-            HttpHeaders.contentTypeHeader: "application/json",
-            if (cookie != null) HttpHeaders.cookieHeader: cookie
-          },
-          body: body != null ? jsonEncode(body) : null,
-        )
-        // set server response timeout
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: _timeoutRespone,
-        );
+    return client.post(
+      Uri.parse("$apiUrl$path"),
+      headers: {
+        HttpHeaders.acceptHeader: "application/json",
+        HttpHeaders.contentTypeHeader: "application/json",
+        if (cookie != null) HttpHeaders.cookieHeader: cookie
+      },
+      body: body != null ? jsonEncode(body) : null,
+    );
   }
 
   /// Get user session info
   Future<User?> _getUserSession() async {
-    final response = await _get("/user");
-
-    if (response.statusCode == 200) {
-      final user = User.fromJson(jsonDecode(response.body));
-      return user;
-    } else {
+    try {
+      final response = await _get("/user");
+      if (response.statusCode == 200) {
+        final user = User.fromJson(jsonDecode(response.body));
+        return user;
+      } else {
+        return null;
+      }
+    } catch (e, stackTrace) {
+      _debugPrint(e, stackTrace);
       return null;
     }
   }
@@ -136,28 +128,33 @@ class SessionProvider extends ChangeNotifier {
 
   // Login promise
   Future<LoginResult> login(String username, String password) async {
-    final response = await _post(
-      "/login",
-      body: <String, dynamic>{
-        "username": username,
-        "password": password,
-      },
-    );
+    try {
+      final response = await _post(
+        "/login",
+        body: <String, dynamic>{
+          "username": username,
+          "password": password,
+        },
+      );
 
-    if (response.statusCode == 200) {
-      await _saveSession(response);
-      await refreshSession();
-      return LoginResult(success: true);
-    } else if (response.statusCode == 403) {
-      return LoginResult(
-        success: false,
-        message: "Incorrect Username or Password",
-      );
-    } else {
-      return LoginResult(
-        success: false,
-        message: "An unknown error has occured",
-      );
+      if (response.statusCode == 200) {
+        await _saveSession(response);
+        await refreshSession();
+        return LoginResult(success: true);
+      } else if (response.statusCode == 403) {
+        return LoginResult(
+          success: false,
+          message: "Incorrect Username or Password",
+        );
+      } else {
+        return LoginResult(
+          success: false,
+          message: "An unknown error has occured",
+        );
+      }
+    } catch (e, stackTrace) {
+      _debugPrint(e, stackTrace);
+      return LoginResult(success: false, message: e.toString());
     }
   }
 
@@ -167,39 +164,49 @@ class SessionProvider extends ChangeNotifier {
     String email,
     String password,
   ) async {
-    final response = await _post(
-      "/register",
-      body: <String, dynamic>{
-        "username": username,
-        "email": email,
-        "password": password
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return const RegisterResult(success: true);
-    } else if (response.statusCode == 403) {
-      Map<String, dynamic> responseBody = jsonDecode(response.body);
-      String message = responseBody["message"];
-      return RegisterResult(success: false, message: message);
-    } else {
-      return const RegisterResult(
-        success: false,
-        message: "An unkown error has occured",
+    try {
+      final response = await _post(
+        "/register",
+        body: <String, dynamic>{
+          "username": username,
+          "email": email,
+          "password": password
+        },
       );
+
+      if (response.statusCode == 200) {
+        return const RegisterResult(success: true);
+      } else if (response.statusCode == 403) {
+        Map<String, dynamic> responseBody = jsonDecode(response.body);
+        String message = responseBody["message"];
+        return RegisterResult(success: false, message: message);
+      } else {
+        return const RegisterResult(
+          success: false,
+          message: "An unkown error has occured",
+        );
+      }
+    } catch (e, stackTrace) {
+      _debugPrint(e, stackTrace);
+      return RegisterResult(success: false, message: e.toString());
     }
   }
 
   // Logout promise
   Future<bool> logout() async {
-    final response = await _post("/logout");
+    try {
+      final response = await _post("/logout");
 
-    if (response.statusCode == 200) {
-      await _clearSessionKey();
-      // set user to null
-      _user = null;
-      return true;
-    } else {
+      if (response.statusCode == 200) {
+        await _clearSessionKey();
+        // set user to null
+        _user = null;
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e, stackTrace) {
+      _debugPrint(e, stackTrace);
       return false;
     }
   }
